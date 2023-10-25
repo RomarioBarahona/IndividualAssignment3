@@ -1,26 +1,30 @@
 <?php
-// Database connection
-$db = new mysqli("localhost", "root", "password", "password_manager");
-if ($db->connect_error) {
-    die("Connection failed: " . $db->connect_error);
+// MongoDB connection
+$mongoClient = new MongoDB\Client("mongodb+srv://romariobarahona:TE2iCzsCTtQ8gjfY@homework3.f6bgtbm.mongodb.net/");
+$db = $mongoClient->mydb; // Replace with your database name
+$collection = $db->users;
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = $_POST["username"];
+    $email = $_POST["email"];
+    $password = $_POST["password"];
+
+    // Hash the password
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+    // Check if the user already exists
+    $existingUser = $collection->findOne(["username" => $username]);
+    if ($existingUser) {
+        echo "Username already exists. Please choose another.";
+    } else {
+        // Insert the new user into the collection
+        $userDocument = [
+            "username" => $username,
+            "email" => $email,
+            "password" => $hashedPassword,
+        ];
+        $collection->insertOne($userDocument);
+        echo "Registration successful!";
+    }
 }
-
-// Get user input
-$username = $_POST["username"];
-$email = $_POST["email"];
-$password = password_hash($_POST["password"], PASSWORD_BCRYPT);
-
-// Insert data into the database
-$sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
-$stmt = $db->prepare($sql);
-$stmt->bind_param("sss", $username, $email, $password);
-
-if ($stmt->execute()) {
-    echo "Registration successful!";
-} else {
-    echo "Error: " . $stmt->error;
-}
-
-$stmt->close();
-$db->close();
 ?>

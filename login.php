@@ -1,27 +1,19 @@
 <?php
-// Database connection
-$db = new mysqli("localhost", "root", "password", "password_manager");
-if ($db->connect_error) {
-    die("Connection failed: " . $db->connect_error);
-}
+// MongoDB connection
+$mongoClient = new MongoDB\Client("mongodb+srv://romariobarahona:TE2iCzsCTtQ8gjfY@homework3.f6bgtbm.mongodb.net/");
+$db = $mongoClient->mydb; // Replace with your database name
+$collection = $db->users;
 
 // Get user input
 $username = $_POST["username"];
 $password = $_POST["password"];
 
-// Retrieve the stored hash
-$sql = "SELECT password FROM users WHERE username=?";
-$stmt = $db->prepare($sql);
-$stmt->bind_param("s", $username);
-$stmt->execute();
-$stmt->bind_result($storedHash);
+// Retrieve the user document
+$userDocument = $collection->findOne(["username" => $username]);
 
-if ($stmt->fetch() && password_verify($password, $storedHash)) {
+if ($userDocument && password_verify($password, $userDocument["password"])) {
     echo "Login successful!";
 } else {
     echo "Login failed. Invalid username or password.";
 }
-
-$stmt->close();
-$db->close();
 ?>
